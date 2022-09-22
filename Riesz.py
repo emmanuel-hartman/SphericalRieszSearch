@@ -1,7 +1,15 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 from torch.autograd import grad
+import matplotlib.pyplot as plt
+use_keops=True
+use_cuda = True
+if use_keops:
+    from pykeops.torch import Genred 
+    from pykeops.torch.kernel_product.formula import *
+torchdeviceId = torch.device('cuda:0') if use_cuda else 'cpu'
+torchdtype = torch.float32
+
 
 def proj(x):
     if torch.is_tensor(x):
@@ -13,10 +21,29 @@ class RieszSearcher:
     
     def __init__(self, s):
         self.s=s
+        if use_keops and  s not in [0.5,1.0,2.0,4.0]:
+            print("Keops functionality only supports s in [0.5,1.0,2.0,4.0]. Set use_keops to false in Riesz.py or change s!!")
+        
+    def keops_enr(self,x):
+        points=x.T.clone()
+        d = x.shape[0]
+        if self.s == 2.0:
+            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Inv(SqDist(x, y)))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
+        elif self.s==1.0:
+            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Rsqrt(SqDist(x, y)))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
+        elif self.s==.5:
+            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Sqrt(Rsqrt(SqDist(x, y))))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
+        elif self.s==4.0:
+            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Square(Inv(SqDist(x, y))))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
+        a=pK(points,points)
+        return torch.dot(a.view(-1), torch.ones_like(a).view(-1))
 
 
     def enr(self,x):
-        dist=torch.zeros((x.shape[1],x.shape[1]))
+        if use_keops and self.s in [0.5,1.0,2.0,4.0]:
+            return self.keops_enr(x)            
+        
+        dist=torch.zeros((x.shape[1],x.shape[1])).to(dtype=torchdtype, device=torchdeviceId)
         for i in range(0,dist.shape[0]):
             for j in range(i+1,dist.shape[0]):
                   dist[i,j]=(1/torch.sqrt(((x[:,i]-x[:,j])**2).sum()))**self.s
@@ -25,7 +52,7 @@ class RieszSearcher:
         return dist.sum()
 
     def plot(self,x, save=None):
-        disp=x.detach().numpy()
+        disp=x.cpu().detach().numpy()
         fig = plt.figure(figsize=(10,10))
         ax = fig.add_subplot(projection='3d')
         ax.scatter(disp[0,:], disp[1,:],disp[2,:])
@@ -44,7 +71,7 @@ class RieszSearcher:
 
     def pgd(self,x,max_iter,epsilon,alpha, display=None):
         x.requires_grad_()
-        ls=[x.detach().numpy()]
+        ls=[x.detach().cpu().numpy()]
         enr_ls=[self.enr(x).item()]
         for i in range(0,max_iter):
             if display is not None:
@@ -56,7 +83,7 @@ class RieszSearcher:
             new_x=proj(new_x)        
             enrx=self.enr(new_x)        
             re =(self.enr(x)-enrx)/enrx
-            ls+=[x.detach().numpy()]
+            ls+=[x.detach().cpu().numpy()]
             enr_ls+=[enrx.item()]
             print(i,enrx.item(),re.item())
             if re> epsilon:
