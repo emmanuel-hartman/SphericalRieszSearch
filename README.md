@@ -20,6 +20,9 @@ SphericalRieszSearch involves the following Python libraries:
 * Matplotlib 3.5.1
 * Pytorch 1.10.2
 
+An option has been included to leverage Pykeops for high N. This has many additional requirements, but can be turned off by setting use_keops to false in Riesz.py
+
+*Pykeops PyKeops 1.5
 
 
 Licence
