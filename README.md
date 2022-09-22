@@ -11,6 +11,15 @@ Minimizes Riesz energy for N point on a d-dimensional sphere using projected gra
 </tr></center>
 </table>
 
+Dependencies
+------------
+
+SphericalRieszSearch involves the following Python libraries:
+
+* Numpy 1.21.5
+* Matplotlib 3.5.1
+* Pytorch 1.10.2
+
 
 
 Licence
