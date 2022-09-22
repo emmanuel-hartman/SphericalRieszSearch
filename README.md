@@ -4,11 +4,17 @@ Minimizes Riesz energy for N point on a d-dimensional sphere using projected gra
 
 <table>
 <tr>
-<td>N=4</td><td>N=25</td><td>N=50</td>
+<td><img src="4.gif" height="500" /></td><td><img src="25.gif" height="500" />
 </tr>
 <tr>
-<td><img src="4.gif" height="300" /></td><td><img src="25.gif" height="300" /></td><td><img src="50.gif" height="300" /></td>
-</tr></center>
+<td>N=4</td><td>N=25</td>
+</tr>
+<tr>
+</td><td><img src="50.gif" height="500" /></td><td><img src="1000.gif" height="500" /></td>
+</tr>
+<tr>
+<td>N=50</td><td>N=1000</td>
+</tr>
 </table>
 
 Dependencies
@@ -20,10 +26,11 @@ SphericalRieszSearch involves the following Python libraries:
 * Matplotlib 3.5.1
 * Pytorch 1.10.2
 
-An option has been included to leverage Pykeops for high N. This has many additional requirements, but can be turned off by setting use_keops to false in Riesz.py
+An option has been included to leverage Pykeops for high N. 
 
-*Pykeops PyKeops 1.5
+* PyKeops 1.5
 
+This option has additional requirements, but can be turned off by setting use_keops to false in Riesz.py
 
 Licence
 -------
