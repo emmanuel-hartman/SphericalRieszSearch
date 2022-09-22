@@ -21,26 +21,17 @@ class RieszSearcher:
     
     def __init__(self, s):
         self.s=s
-        if use_keops and  s not in [0.5,1.0,2.0,4.0]:
-            print("Keops functionality only supports s in [0.5,1.0,2.0,4.0]. Set use_keops to false in Riesz.py or change s!!")
         
     def keops_enr(self,x):
         points=x.T.clone()
         d = x.shape[0]
-        if self.s == 2.0:
-            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Inv(SqDist(x, y)))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
-        elif self.s==1.0:
-            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Rsqrt(SqDist(x, y)))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
-        elif self.s==.5:
-            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Sqrt(Rsqrt(SqDist(x, y))))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
-        elif self.s==4.0:
-            pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Square(Inv(SqDist(x, y))))",['x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
-        a=pK(points,points)
+        pK = Genred("IfElse(Minus(SqDist(x, y)),SqDist(x, y),Exp(a*Log(Rsqrt(SqDist(x, y)))))",['a=Pm(1)','x=Vi('+str(d)+')','y=Vj('+str(d)+')'],reduction_op='Sum',axis=1)
+        a=pK(torch.tensor([self.s], dtype=torchdtype, device=torchdeviceId),points,points)
         return torch.dot(a.view(-1), torch.ones_like(a).view(-1))
 
 
     def enr(self,x):
-        if use_keops and self.s in [0.5,1.0,2.0,4.0]:
+        if use_keops:
             return self.keops_enr(x)            
         
         dist=torch.zeros((x.shape[1],x.shape[1])).to(dtype=torchdtype, device=torchdeviceId)
