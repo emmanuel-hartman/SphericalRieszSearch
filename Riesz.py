@@ -6,7 +6,6 @@ use_keops=True
 use_cuda = True
 if use_keops:
     from pykeops.torch import Genred 
-    from pykeops.torch.kernel_product.formula import *
 torchdeviceId = torch.device('cuda:0') if use_cuda else 'cpu'
 torchdtype = torch.float32
 
